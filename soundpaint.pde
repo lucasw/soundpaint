@@ -19,6 +19,7 @@
 
 import ddf.minim.*;
 import ddf.minim.ugens.*;
+import ddf.minim.analysis.FFT;
 
 Minim              minim;
 MultiChannelBuffer sampleBuffer;
@@ -31,6 +32,8 @@ float[] vals = new float[256];
 MultiChannelBuffer valBuffer;
 
 final int y_max = 256;
+
+FFT fft = new FFT(vals.length, 22100);
 
 void setup()
 {
@@ -130,6 +133,19 @@ void draw() {
     line( (i-1), vals[i-1], i, vals[i] ); 
   }
  
+  // draw the fft
+  {
+    noFill();
+      stroke(255);
+      final int x_off = vals.length + 50;
+      rect(x_off, 0, vals.length/2, y_max);
+      stroke(255, 200, 0);
+      for (int i = 1; i < vals.length/2; i++) {
+        line( x_off + (i-1), y_max - (100 + 10 * log(fft.getBand(i-1))), 
+              x_off + i,     y_max - (100 + 10 * log(fft.getBand(i)))   ); 
+      }
+  }
+
   int mouse_x = (int) mouseX; 
   if ( mousePressed &&
     ( mouse_x < vals.length ) &&
@@ -179,6 +195,10 @@ void draw() {
     min = 0;
     max = 0;
 
+
+    /// fft
+    fft.forward(vals);
+
     recording = false;
   }
 
@@ -199,14 +219,22 @@ void keyPressed()
   
   if (key == 'b') {
     float[] vals2 = new float[vals.length];
-    
+    float[] filt = new float[5];
+    filt[0] = 0.05;
+    filt[1] = 0.2;
+    filt[2] = 0.5;
+    filt[3] = 0.2;
+    filt[4] = 0.05;
+
     for (int i = 0; i < vals.length; i++) {
-      for (int j = i-1; j <= i+1; j++) {
-        vals2[i] += vals[ (j + vals.length) % vals.length];
+      for (int j = 0; j < filt.length; j++) {
+        int ind = i + j - (filt.length/2);
+        ind = (ind + vals.length) % vals.length;
+        vals2[i] += vals[ind] * filt[j];
       }
-      vals2[i] /= 3.0;
     }
     vals = vals2;
+    recording = true;
   }
   if (key == 'a') sampler[0].trigger();
   if (key == 's') sampler[1].trigger();
