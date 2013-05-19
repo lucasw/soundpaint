@@ -27,7 +27,7 @@ AudioOutput        output;
 Sampler[]            sampler = new Sampler[10];
 Sampler val_sampler;
 
-int[] vals = new int[256];
+float[] vals = new float[256];
 MultiChannelBuffer valBuffer;
 
 final int y_max = 256;
@@ -163,13 +163,13 @@ void draw() {
     for (int i = 0; i < valBuffer.getBufferSize(); i++) {
       //float v = ( ( (float) vals[i % vals.length] - min ) /
       //    ( max - min ) ) * 2.0 - 1.0;
-      float v = ( ( (float) vals[i % vals.length] ) /
+      float v = ( ( vals[i % vals.length] ) /
           ( (float)y_max ) ) * 2.0 - 1.0;
       valBuffer.setSample( 0, i, v );
     }
    
     for (int i = 0; i < sampler.length; i++) {
-      float rate = 1000 + 10000 * ((float)i + 1);
+      float rate = 1000 + 6000 * ((float)i + 1);
       println( "rate " + str(rate) );
       sampler[i] = new Sampler( valBuffer, rate, 1 ); // 4000.0 * (i + 1) * (i + 1), 1 );
 
@@ -198,8 +198,15 @@ void keyPressed()
   //if (key == 'a' && val_sampler != null)  val_sampler.trigger();
   
   if (key == 'b') {
-
-
+    float[] vals2 = new float[vals.length];
+    
+    for (int i = 0; i < vals.length; i++) {
+      for (int j = i-1; j <= i+1; j++) {
+        vals2[i] += vals[ (j + vals.length) % vals.length];
+      }
+      vals2[i] /= 3.0;
+    }
+    vals = vals2;
   }
   if (key == 'a') sampler[0].trigger();
   if (key == 's') sampler[1].trigger();
