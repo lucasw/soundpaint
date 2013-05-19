@@ -30,9 +30,11 @@ Sampler val_sampler;
 int[] vals = new int[256];
 MultiChannelBuffer valBuffer;
 
+final int y_max = 256;
+
 void setup()
 {
-  size(800, 300); //, P3D);
+  size(800, 450); //, P3D);
   
   // create Minim and an AudioOutput
   minim  = new Minim(this);
@@ -44,7 +46,7 @@ void setup()
   // to match the channel count and length of the file.
   sampleBuffer     = new MultiChannelBuffer( 1, 1024 );
   
-  valBuffer = new MultiChannelBuffer( vals.length * 30, 1 );
+  valBuffer = new MultiChannelBuffer( vals.length * 60, 1 );
   println("buffer size " + str(valBuffer.getBufferSize()) );
 
   // we pass the buffer to the method and Minim will reconfigure it to match 
@@ -102,21 +104,27 @@ float max = 0;
 boolean old_mouse_pressed = false;
 int old_mouse_x= 0;
 int old_mouse_y = 0;
-void draw()
-{
+
+void draw() {
   background(0);
-  stroke(255);
+  stroke(10, 255, 20);
   
+  final float sc = 30;
   // use the mix buffer to draw the waveforms.
   for (int i = 0; i < output.bufferSize() - 1; i++)
   {
-    float x1 = map(i, 0, output.bufferSize(), 0, width);
+    float x1 = map(i,   0, output.bufferSize(), 0, width);
     float x2 = map(i+1, 0, output.bufferSize(), 0, width);
-    line(x1, 50 - output.left.get(i)*50, x2, 50 - output.left.get(i+1)*50);
-    line(x1, 150 - output.right.get(i)*50, x2, 150 - output.right.get(i+1)*50);
+    line(x1, y_max +       sc - output.left.get(i)   *sc,  
+         x2, y_max +       sc - output.left.get(i+1) *sc);
+    line(x1, y_max + 100 + sc - output.right.get(i)  *sc, 
+         x2, y_max + 100 + sc - output.right.get(i+1)*sc);
   }
-  
-  //noStroke();
+ 
+  // draw the waveform
+  noFill();
+  stroke(255);
+  rect(0, 0, vals.length, y_max);
   stroke(255,0,0);
   for (int i = 1; i < vals.length; i++) {
     line( (i-1), vals[i-1], i, vals[i] ); 
@@ -125,7 +133,8 @@ void draw()
   int mouse_x = (int) mouseX; 
   if ( mousePressed &&
     ( mouse_x < vals.length ) &&
-    ( mouse_x >= 0 ) ) {
+    ( mouse_x >= 0 ) && 
+    ( mouseY < y_max) ) {
     
     //if (abs(mouse_x - old_mouse_x) < 10) {
     if (old_mouse_pressed &&
@@ -149,15 +158,18 @@ void draw()
   //if (!mousePressed && old_mouse_pressed) //ind >= vals.length) 
     old_mouse_pressed = mousePressed;
 
+  // update all the samples based on the currently drawn waveform
   if (recording) {
     for (int i = 0; i < valBuffer.getBufferSize(); i++) {
-      float v = ( ( (float) vals[i % vals.length] - min ) /
-          ( max - min ) ) * 2.0 - 1.0;
+      //float v = ( ( (float) vals[i % vals.length] - min ) /
+      //    ( max - min ) ) * 2.0 - 1.0;
+      float v = ( ( (float) vals[i % vals.length] ) /
+          ( (float)y_max ) ) * 2.0 - 1.0;
       valBuffer.setSample( 0, i, v );
     }
    
     for (int i = 0; i < sampler.length; i++) {
-      float rate = 1000 + 6000 * ((float)i + 1);
+      float rate = 1000 + 10000 * ((float)i + 1);
       println( "rate " + str(rate) );
       sampler[i] = new Sampler( valBuffer, rate, 1 ); // 4000.0 * (i + 1) * (i + 1), 1 );
 
@@ -184,6 +196,11 @@ void keyPressed()
   } //
 
   //if (key == 'a' && val_sampler != null)  val_sampler.trigger();
+  
+  if (key == 'b') {
+
+
+  }
   if (key == 'a') sampler[0].trigger();
   if (key == 's') sampler[1].trigger();
   if (key == 'd') sampler[2].trigger();
