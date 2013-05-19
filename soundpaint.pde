@@ -110,6 +110,7 @@ int old_mouse_y = 0;
 
 void draw() {
   background(0);
+  strokeWeight(1.0);
   stroke(10, 255, 20);
   
   final float sc = 30;
@@ -118,10 +119,12 @@ void draw() {
   {
     float x1 = map(i,   0, output.bufferSize(), 0, width);
     float x2 = map(i+1, 0, output.bufferSize(), 0, width);
-    line(x1, y_max +       sc - output.left.get(i)   *sc,  
-         x2, y_max +       sc - output.left.get(i+1) *sc);
-    line(x1, y_max + 100 + sc - output.right.get(i)  *sc, 
-         x2, y_max + 100 + sc - output.right.get(i+1)*sc);
+    line(x1, y_max,  
+         x1, y_max +       sc - output.left.get(i) *sc);
+    //line(x1, y_max +       sc - output.left.get(i)   *sc,  
+    //     x2, y_max +       sc - output.left.get(i+1) *sc);
+    //line(x1, y_max + 100 + sc - output.right.get(i)  *sc, 
+    //     x2, y_max + 100 + sc - output.right.get(i+1)*sc);
   }
  
   // draw the waveform
@@ -129,8 +132,9 @@ void draw() {
   stroke(255);
   rect(0, 0, vals.length, y_max);
   stroke(255,0,0);
-  for (int i = 1; i < vals.length; i++) {
-    line( (i-1), vals[i-1], i, vals[i] ); 
+  for (int i = 0; i < vals.length; i++) {
+    //line( (i-1), vals[i-1], i, vals[i] ); 
+    line( i, 0, i, vals[i] ); 
   }
  
   // draw the fft
@@ -140,9 +144,11 @@ void draw() {
       final int x_off = vals.length + 50;
       rect(x_off, 0, vals.length/2, y_max);
       stroke(255, 200, 0);
-      for (int i = 1; i < vals.length/2; i++) {
-        line( x_off + (i-1), y_max - (100 + 10 * log(fft.getBand(i-1))), 
+      for (int i = 0; i < vals.length/2; i++) {
+        line( x_off + i, y_max, 
               x_off + i,     y_max - (100 + 10 * log(fft.getBand(i)))   ); 
+        //line( x_off + (i-1), y_max - (100 + 10 * log(fft.getBand(i-1))), 
+        //      x_off + i,     y_max - (100 + 10 * log(fft.getBand(i)))   ); 
       }
   }
 
@@ -186,7 +192,7 @@ void draw() {
    
     for (int i = 0; i < sampler.length; i++) {
       float rate = 1000 + 6000 * ((float)i + 1);
-      println( "rate " + str(rate) );
+      //println( "rate " + str(rate) );
       sampler[i] = new Sampler( valBuffer, rate, 1 ); // 4000.0 * (i + 1) * (i + 1), 1 );
 
       // and finally, connect to the output so we can hear it
