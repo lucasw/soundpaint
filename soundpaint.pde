@@ -33,7 +33,44 @@ MultiChannelBuffer valBuffer;
 
 final int y_max = 256;
 
-FFT fft = new FFT(vals.length, 22100);
+public class FFTb extends FFT
+{
+  protected float[] phase;
+
+  public FFTb(int timeSize, float sampleRate)
+  { 
+    super(timeSize, sampleRate);
+  }
+
+  protected void allocateArrays()
+  {
+    super.allocateArrays();
+    phase = new float[timeSize / 2 + 1];
+  }
+
+  protected void fillSpectrum()
+  {
+    super.fillSpectrum();
+
+    for (int i = 0; i < phase.length; i++) 
+    {
+      phase[i] = (float) Math.atan2(imag[i], real[i]);
+    }
+  }
+ 
+  /*
+   *  This is the new function all the other functions 
+   *  are in service of- get the phase from the fft 
+   */
+  public float getPhase(int i)
+  {
+    if (i < 0) i = 0;
+    if (i > phase.length - 1) i = phase.length -1;
+    return phase[i];
+  }
+}
+
+FFTb fft = new FFTb(vals.length, 22100);
 
 void setup()
 {
@@ -146,9 +183,10 @@ void draw() {
       stroke(255, 200, 0);
       for (int i = 0; i < vals.length/2; i++) {
         line( x_off + i, y_max, 
-              x_off + i,     y_max - (100 + 10 * log(fft.getBand(i)))   ); 
-        //line( x_off + (i-1), y_max - (100 + 10 * log(fft.getBand(i-1))), 
-        //      x_off + i,     y_max - (100 + 10 * log(fft.getBand(i)))   ); 
+              x_off + i, y_max - (100 + 10 * log(fft.getBand(i))) ); 
+        
+        line( x_off + vals.length/2 + 50 + i, y_max, 
+              x_off + vals.length/2 + 50 + i, y_max - (100 + 10 * fft.getPhase(i)) ); 
       }
   }
 
