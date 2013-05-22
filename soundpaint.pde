@@ -28,7 +28,11 @@ AudioOutput        output;
 Sampler[]            sampler = new Sampler[10];
 Sampler val_sampler;
 
-float[] vals = new float[256];
+final int NUM = 256;
+float[] vals = new float[NUM];
+float[] fft_pow = new float[NUM];
+float[] fft_phase = new float[NUM];
+
 MultiChannelBuffer valBuffer;
 
 final int y_max = 256;
@@ -170,7 +174,10 @@ void draw() {
     //line( (i-1), vals[i-1], i, vals[i] ); 
     line( i, 0, i, vals[i] ); 
   }
- 
+
+  //final float fft_sc = 0.25;
+  final float fft_sc = 10.0;
+  final float fft_off = 140.0;
   // draw the fft
   {
     noFill();
@@ -179,8 +186,15 @@ void draw() {
       rect(x_off, 0, vals.length/2, y_max);
       stroke(255, 200, 0);
       for (int i = 0; i < vals.length/2; i++) {
+        fft_pow[i] = fft.getBand(i);
+        fft_pow[fft_pow.length - i - 1] = fft_pow[i];
+
+        fft_phase[i] = fft.getBand(i);
+        fft_phase[fft_phase.length - i - 1] = fft_phase[i];
+
         line( x_off + i, y_max, 
-              x_off + i, y_max - (100 + 10 * log(fft.getBand(i))) ); 
+              x_off + i, y_max - (fft_off + fft_sc * log(fft_pow[i])) ); 
+              //x_off + i, y_max - (fft_sc * (fft_pow[i])) ); 
         
         line( x_off + vals.length/2 + 50 + i, y_max, 
               x_off + vals.length/2 + 50 + i, y_max - (100 + 10 * fft.getPhase(i)) ); 
