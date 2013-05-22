@@ -139,6 +139,7 @@ void setup()
 
 int ind = 0;
 boolean recording = false;
+boolean vals_changed = false;
 float min = 0;
 float max = 0;
 boolean old_mouse_pressed = false;
@@ -155,13 +156,9 @@ void draw() {
   for (int i = 0; i < output.bufferSize() - 1; i++)
   {
     float x1 = map(i,   0, output.bufferSize(), 0, width);
-    float x2 = map(i+1, 0, output.bufferSize(), 0, width);
-    line(x1, y_max,  
-         x1, y_max +       sc - output.left.get(i) *sc);
-    //line(x1, y_max +       sc - output.left.get(i)   *sc,  
-    //     x2, y_max +       sc - output.left.get(i+1) *sc);
-    //line(x1, y_max + 100 + sc - output.right.get(i)  *sc, 
-    //     x2, y_max + 100 + sc - output.right.get(i+1)*sc);
+    //float x2 = map(i+1, 0, output.bufferSize(), 0, width);
+    line(x1, y_max + (height - y_max)/2,  
+         x1, y_max + (height - y_max)/2 - output.left.get(i) * sc);
   }
  
   // draw the waveform
@@ -203,6 +200,7 @@ void draw() {
     
       for (int i = min(mouse_x, old_mouse_x); i < max(mouse_x, old_mouse_x); i++) {
         vals[i] = mouseY;
+        vals_changed = true;
       }
     } else {
       vals[mouse_x] = mouseY;
@@ -215,8 +213,12 @@ void draw() {
   old_mouse_x = mouse_x;
   //old_mouse_y = mouse_y;
 
-  //if (!mousePressed && old_mouse_pressed) //ind >= vals.length) 
-    old_mouse_pressed = mousePressed;
+  if (vals_changed && !mousePressed && old_mouse_pressed) {
+    recording = true;
+    vals_changed = false;
+  }
+  
+  old_mouse_pressed = mousePressed;
 
   // update all the samples based on the currently drawn waveform
   if (recording) {
