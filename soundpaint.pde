@@ -159,6 +159,18 @@ float max = 0;
 boolean old_mouse_pressed = false;
 int old_mouse_x= 0;
 int old_mouse_y = 0;
+final int x_off = NUM + 50;
+final float fft_sc = 10.0;
+final float fft_off = 170.0;
+
+void changeBand(int mouse_x, int mouse_y) {
+  int ind = mouse_x - x_off;
+  float fft_pow_new = exp(( y_max - fft_off - mouse_y) / fft_sc);
+  fft_pow[ind] = fft_pow_new;
+
+  //println("new fft pow " + str(ind) + " " + str(fft_pow_new)) ;
+  fft.setBand(ind, fft_pow[ind]);
+}
 
 void draw() {
   background(0);
@@ -186,9 +198,6 @@ void draw() {
   }
 
   //final float fft_sc = 0.25;
-  final float fft_sc = 10.0;
-  final float fft_off = 140.0;
-  final int x_off = vals.length + 50;
   // draw the fft
   {
     noFill();
@@ -245,19 +254,23 @@ void draw() {
     }
 
     // in fft power area
-    if ( ( mouse_x < x_off + fft_pow.length ) &&
+    if ( ( mouse_x < x_off + fft_pow.length/2 ) &&
         ( mouse_x >= x_off ) && 
         ( mouseY < y_max) ) {
 
-       int ind = mouse_x - x_off;
-       float fft_pow_new = exp(( y_max - fft_off - mouseY) / fft_sc);
-       fft_pow[ind] = fft_pow_new;
-      
-       //println("new fft pow " + str(ind) + " " + str(fft_pow_new)) ;
-       fft.setBand(ind, fft_pow[ind]);
-       new_fft = true;
-     }
+      if (old_mouse_pressed &&
+          ( old_mouse_x < x_off + fft_pow.length/2 ) &&
+          ( old_mouse_x >= x_off ) ) {
 
+        for (int i = min(mouse_x, old_mouse_x); i < max(mouse_x, old_mouse_x); i++) {
+          changeBand(i, mouseY); 
+        }
+      } else {
+        changeBand(mouse_x, mouseY); 
+      }
+       
+      new_fft = true;
+    }
 
   }// mousePressed
 
@@ -366,8 +379,13 @@ void keyPressed()
   if (key == 'n') {
 
     float mean_v = 0;
+    float max_v = 0;
+    float min_v = 1e6;
     for (int i = 0; i < vals.length; i++) {
       mean_v += vals[i];
+
+      if (vals[i] > max_v) max_v = vals[i];
+      if (vals[i] < min_v) min_v = vals[i];
     }
     mean_v /= vals.length;
 
@@ -375,6 +393,8 @@ void keyPressed()
 
     for (int i = 0; i < vals.length; i++) {
       vals[i] -= mean_v;
+
+      //vals
     }
     recording = true;
   }
