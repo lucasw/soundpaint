@@ -165,24 +165,24 @@ void draw() {
          x1, y_max + (height - y_max)/2 - output.left.get(i) * sc);
   }
  
-  // draw the waveform
+  // draw the time waveform
   noFill();
   stroke(255);
   rect(0, 0, vals.length, y_max);
   stroke(255,0,0);
   for (int i = 0; i < vals.length; i++) {
     //line( (i-1), vals[i-1], i, vals[i] ); 
-    line( i, 0, i, vals[i] ); 
+    line( i, y_max/2, i, vals[i] + y_max/2); 
   }
 
   //final float fft_sc = 0.25;
   final float fft_sc = 10.0;
   final float fft_off = 140.0;
+  final int x_off = vals.length + 50;
   // draw the fft
   {
     noFill();
       stroke(255);
-      final int x_off = vals.length + 50;
       rect(x_off, 0, vals.length/2, y_max);
       stroke(255, 200, 0);
       for (int i = 0; i < vals.length/2; i++) {
@@ -201,29 +201,48 @@ void draw() {
       }
   }
 
-  int mouse_x = (int) mouseX; 
-  if ( mousePressed &&
-    ( mouse_x < vals.length ) &&
-    ( mouse_x >= 0 ) && 
-    ( mouseY < y_max) ) {
-    
-    //if (abs(mouse_x - old_mouse_x) < 10) {
-    if (old_mouse_pressed &&
-    ( old_mouse_x < vals.length ) &&
-    ( old_mouse_x >= 0 ) ) {
-    
-      for (int i = min(mouse_x, old_mouse_x); i < max(mouse_x, old_mouse_x); i++) {
-        vals[i] = mouseY;
-        vals_changed = true;
+  int mouse_x = (int) mouseX;
+
+  // mouse in 
+  if ( mousePressed ) {
+  
+    // in time signal area
+    if ( ( mouse_x < vals.length ) &&
+        ( mouse_x >= 0 ) && 
+        ( mouseY < y_max) ) {
+
+      //if (abs(mouse_x - old_mouse_x) < 10) {
+      if (old_mouse_pressed &&
+          ( old_mouse_x < vals.length ) &&
+          ( old_mouse_x >= 0 ) ) {
+
+        for (int i = min(mouse_x, old_mouse_x); i < max(mouse_x, old_mouse_x); i++) {
+          vals[i] = mouseY - y_max/2;
+          vals_changed = true;
+        }
+      } else {
+        vals[mouse_x] = mouseY - y_max/2;
       }
-    } else {
-      vals[mouse_x] = mouseY;
+
+      if (mouseY > max) max = mouseY;
+      if (mouseY < min) min = mouseY;
+
     }
 
-    if (mouseY > max) max = mouseY;
-    if (mouseY < min) min = mouseY;
+    // in fft power area
+    if ( ( mouse_x < x_off + fft_pow.length ) &&
+        ( mouse_x >= x_off ) && 
+        ( mouseY < y_max) ) {
+
+       int ind = mouse_x - x_off;
+       float fft_pow_new = exp( (mouseY - fft_off)/fft_sc );
+       fft_pow[ind] = fft_pow_new;
   
-  }
+     }
+
+
+  }// mousePressed
+
   old_mouse_x = mouse_x;
   //old_mouse_y = mouse_y;
 
@@ -240,7 +259,7 @@ void draw() {
       //float v = ( ( (float) vals[i % vals.length] - min ) /
       //    ( max - min ) ) * 2.0 - 1.0;
       float v = ( ( vals[i % vals.length] ) /
-          ( (float)y_max ) ) * 2.0 - 1.0;
+          ( (float)y_max/2 ) );
       valBuffer.setSample( 0, i, v );
     }
    
@@ -294,6 +313,21 @@ void keyPressed()
       }
     }
     vals = vals2;
+    recording = true;
+  }
+  if (key == 'n') {
+
+    float mean_v = 0;
+    for (int i = 0; i < vals.length; i++) {
+      mean_v += vals[i];
+    }
+    mean_v /= vals.length;
+
+    println("mean val " + str(mean_v));
+
+    for (int i = 0; i < vals.length; i++) {
+      vals[i] -= mean_v;
+    }
     recording = true;
   }
   if (key == 'a') sampler[0].trigger();
