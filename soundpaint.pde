@@ -55,12 +55,37 @@ public class FFTb extends FFT
   protected void fillSpectrum()
   {
     super.fillSpectrum();
-
+    
+    float unwrap = 0;
+    float pmin = 1e6;
+    float pmax = -1e6;
     for (int i = 0; i < phase.length; i++) 
     {
-      phase[i] = (float) Math.atan2(imag[i], real[i]);
-    }
-  }
+      phase[i] = (float) Math.atan2(imag[i], real[i]) + unwrap;
+      
+      if (phase[i] > pmax) pmax = phase[i];
+      if (phase[i] < pmin) pmin = phase[i];
+      
+      //println("phase " + str(i) + " " + str(phase[i]));
+      // unwrap
+      /*
+      if (i > 0) {
+        if ( (phase[i] - phase[i-1]) > (TWO_PI - 1.2) ) {
+           println("unwrap " + str(i) + " " + str(phase[i]) + " " + str(phase[i-1]));
+           unwrap -= TWO_PI;
+           phase[i] -= TWO_PI;
+        }
+        if ( (phase[i-1] - phase[i]) > (TWO_PI - 1.2) ) {
+           println("unwrap " + str(i) + " " + str(phase[i]) + " " + str(phase[i-1]));
+           unwrap += TWO_PI;
+           phase[i] += TWO_PI;
+        }
+
+      } // unwrap
+      */
+    } // phase loop
+    //println("phase " + str(pmin) + " " + str(pmax));
+  } // fillSpectrum
  
   /*
    *  This is the new function all the other functions 
@@ -155,7 +180,7 @@ void setup()
     }
   }
 
-  frameRate(20);
+  frameRate(10);
 }
 
 int ind = 0;
@@ -189,7 +214,7 @@ void changePhase(int mouse_x, int mouse_y) {
 
   float fft_phase_new = (y_max - 100.0 - mouse_y)/10.0;
 
-  println("new fft phase " + str(ind) + " " + str(fft_phase_new)) ;
+  //println("new fft phase " + str(ind) + " " + str(fft_phase_new)) ;
   fft.setPhase(ind, fft_phase_new);
 }
 
@@ -220,12 +245,24 @@ void draw() {
 
   //final float fft_sc = 0.25;
   // draw the fft
-  {
+  final float phase_sc = 5.0;
+  { 
+    noStroke();
+    fill(32);
+    rect(x_phase_min, y_max/2 - 2 * TWO_PI * phase_sc, 
+        vals.length/2, 4 * TWO_PI * phase_sc);
+    fill(64);
+    rect(x_phase_min, y_max/2 - TWO_PI * phase_sc, 
+        vals.length/2, 2 * TWO_PI * phase_sc);
+
     noFill();
       stroke(255);
       rect(x_spectrum_min, 0, vals.length/2, y_max);
-      stroke(255, 200, 0);
+      rect(x_phase_min, 0, vals.length/2, y_max);
+  
+
       for (int i = 0; i < vals.length/2; i++) {
+        stroke(255, 200, 0);
         //fft_pow[i] = fft.getBand(i);
         //fft_pow[fft_pow.length - i - 1] = fft_pow[i];
 
@@ -243,9 +280,21 @@ void draw() {
   
         // pix_y = y_max - 100 - 10* phase
         // phase =( y_max - 100 - pix_y)/10
+
         // TBD unwrap the phase
-        line( x_phase_min + i, y_max, 
-              x_phase_min + i, y_max - (100 + 10 * fft.getPhase(i)) ); 
+        stroke(100, 50, 0);
+        line( 
+              x_phase_min + i, y_max/2 - (phase_sc * (fft.getPhase(i) + 2*TWO_PI)), 
+              x_phase_min + i, y_max/2 - (phase_sc * (fft.getPhase(i) - 2*TWO_PI)) );
+
+        stroke(165, 100, 0);
+        line( 
+              x_phase_min + i, y_max/2 - (phase_sc * (fft.getPhase(i) + TWO_PI)), 
+              x_phase_min + i, y_max/2 - (phase_sc * (fft.getPhase(i) - TWO_PI)) );
+
+        stroke(255, 200, 0);
+        line( x_phase_min + i, y_max/2, 
+              x_phase_min + i, y_max/2 - (phase_sc * fft.getPhase(i) ) ); 
       }
   }
 
