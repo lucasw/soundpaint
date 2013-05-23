@@ -72,6 +72,15 @@ public class FFTb extends FFT
     if (i > phase.length - 1) i = phase.length -1;
     return phase[i];
   }
+
+  /*
+  public float setPowPhase(int i, float pow, float phase)
+  {
+    if (i < 0) i = 0;
+    if (i > phase.length - 1) i = phase.length -1;
+   
+  }
+  */
 }
 
 FFTb fft = new FFTb(vals.length, 22100);
@@ -144,6 +153,7 @@ void setup()
 int ind = 0;
 boolean recording = false;
 boolean vals_changed = false;
+boolean new_fft = false;
 float min = 0;
 float max = 0;
 boolean old_mouse_pressed = false;
@@ -192,8 +202,13 @@ void draw() {
         fft_phase[i] = fft.getBand(i);
         fft_phase[fft_phase.length - i - 1] = fft_phase[i];
 
+        // pix_y = y_max - (fft_off + fft_sc * log(fft_pow[i])) ;
+        // pix_y = y_max - fft_off - fft_sc * log(fft_pow[i]) ;
+        // fft_sc * log(fft_pow[i]) = y_max - fft_off - pix_y
+        // fft_pow[i] = exp(( y_max - fft_off - pix_y) / fft_sc)
         line( x_off + i, y_max, 
-              x_off + i, y_max - (fft_off + fft_sc * log(fft_pow[i])) ); 
+              x_off + i, 
+              y_max - (fft_off + fft_sc * log(fft_pow[i])) ); 
               //x_off + i, y_max - (fft_sc * (fft_pow[i])) ); 
         
         line( x_off + vals.length/2 + 50 + i, y_max, 
@@ -235,9 +250,12 @@ void draw() {
         ( mouseY < y_max) ) {
 
        int ind = mouse_x - x_off;
-       float fft_pow_new = exp( (mouseY - fft_off)/fft_sc );
+       float fft_pow_new = exp(( y_max - fft_off - mouseY) / fft_sc);
        fft_pow[ind] = fft_pow_new;
-  
+      
+       //println("new fft pow " + str(ind) + " " + str(fft_pow_new)) ;
+       fft.setBand(ind, fft_pow[ind]);
+       new_fft = true;
      }
 
 
@@ -245,10 +263,41 @@ void draw() {
 
   old_mouse_x = mouse_x;
   //old_mouse_y = mouse_y;
+  
+  if (!mousePressed && old_mouse_pressed) {
+      
+    if (new_fft) {
+      /*
+      float[] real = new float[fft_pow.length*2];
+      float[] imag = new float[fft_pow.length*2];
 
-  if (vals_changed && !mousePressed && old_mouse_pressed) {
-    recording = true;
-    vals_changed = false;
+      for (int i = 0; i < fft_pow.length; i++) {
+        float new_real_val = fft_pow * cos(fft_phase[i]);
+        real[i] = new_real_val;
+        real[real.length - 1 - i] = new_real_val;
+        
+        float new_imag_val = fft_pow * sin(fft_phase[i]);
+        imag[i] = new_imag_val;
+        imag[imag.length - 1 - i] = new_imag_val;
+      }
+      */
+
+      //for (int i = 0; i < fft_pow.length/2; i++) {
+      //  println("fft " + str(i) + " " + str(fft_pow[i]));
+      //  fft.setBand(i, fft_pow[i]);
+      //}
+      
+      fft.inverse(vals);
+
+      new_fft = false;
+      recording = true;
+    }
+
+    if (vals_changed) {
+      recording = true;
+      vals_changed = false;
+    }
+
   }
   
   old_mouse_pressed = mousePressed;
@@ -273,7 +322,6 @@ void draw() {
     }
     min = 0;
     max = 0;
-
 
     /// fft
     fft.forward(vals);
