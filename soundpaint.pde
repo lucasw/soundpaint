@@ -30,6 +30,8 @@ Sampler val_sampler;
 
 final int NUM = 256;
 float[] vals = new float[NUM];
+// index into the vals for individual value manipulation 
+int val_ind = 0;
 //float[] fft_pow = new float[NUM];
 //float[] fft_phase = new float[NUM];
 
@@ -183,6 +185,7 @@ void setup()
   frameRate(10);
 }
 
+
 int ind = 0;
 boolean recording = false;
 boolean vals_changed = false;
@@ -242,6 +245,10 @@ void draw() {
     //line( (i-1), vals[i-1], i, vals[i] ); 
     line( i, y_max/2, i, vals[i] + y_max/2); 
   }
+  // draw the currently selected sample
+  stroke(255,100,100);
+  line( val_ind, y_max/2, val_ind, vals[val_ind] + y_max/2); 
+
 
   //final float fft_sc = 0.25;
   // draw the fft
@@ -388,8 +395,11 @@ void draw() {
   
   old_mouse_pressed = mousePressed;
 
+  // TBD only do this every n updates or less?
   // update all the samples based on the currently drawn waveform
   if (recording) {
+    fill(0,255,0);
+    rect(10,10, 20,20);
     for (int i = 0; i < valBuffer.getBufferSize(); i++) {
       //float v = ( ( (float) vals[i % vals.length] - min ) /
       //    ( max - min ) ) * 2.0 - 1.0;
@@ -430,18 +440,20 @@ void keyPressed()
 
   //if (key == 'a' && val_sampler != null)  val_sampler.trigger();
   
-  if (key == 'b') {
+  if (key == 'u') {
     float[] vals2 = new float[vals.length];
+    // TBD make the filter configurable in another widget
     float[] filt = new float[5];
     filt[0] = 0.05;
     filt[1] = 0.2;
     filt[2] = 0.5;
     filt[3] = 0.2;
     filt[4] = 0.05;
-
+    
+    // convolution
     for (int i = 0; i < vals.length; i++) {
       for (int j = 0; j < filt.length; j++) {
-        int ind = i + j - (filt.length/2);
+        int ind = i - j - (filt.length/2);
         ind = (ind + vals.length) % vals.length;
         vals2[i] += vals[ind] * filt[j];
       }
@@ -449,7 +461,7 @@ void keyPressed()
     vals = vals2;
     recording = true;
   }
-  if (key == 'n') {
+  if (key == 'i') {
 
     float mean_v = 0;
     float max_v = 0;
@@ -471,15 +483,39 @@ void keyPressed()
     }
     recording = true;
   }
-  if (key == 'a') sampler[0].trigger();
-  if (key == 's') sampler[1].trigger();
-  if (key == 'd') sampler[2].trigger();
-  if (key == 'f') sampler[3].trigger();
-  if (key == 'g') sampler[4].trigger();
-  if (key == 'h') sampler[5].trigger();
-  if (key == 'j') sampler[6].trigger();
-  if (key == 'k') sampler[7].trigger();
-  if (key == 'l') sampler[8].trigger();
-  if (key == ';') sampler[9].trigger();
+
+  if (key == 'h') {
+    val_ind -= 1;
+    val_ind = (val_ind + vals.length) % vals.length;
+  }
+  if (key == 'l') {
+    val_ind += 1;
+    val_ind = (val_ind + vals.length) % vals.length;
+  }
+  if (key == 'j') {
+    vals[val_ind] -= 0.1;
+    if (vals[val_ind] < 0) vals[val_ind] *= 1.05;
+    if (vals[val_ind] > 0) vals[val_ind] *= 0.96;
+    recording = true;
+  }
+  if (key == 'k') {
+    vals[val_ind] += 0.091;
+    if (vals[val_ind] > 0) vals[val_ind] *= 1.051;
+    if (vals[val_ind] < 0) vals[val_ind] *= 0.962;
+    recording = true;
+  }
+
+
+  // play different samplerates
+  if (key == 'z') sampler[0].trigger();
+  if (key == 'x') sampler[1].trigger();
+  if (key == 'c') sampler[2].trigger();
+  if (key == 'v') sampler[3].trigger();
+  if (key == 'b') sampler[4].trigger();
+  if (key == 'n') sampler[5].trigger();
+  if (key == 'm') sampler[6].trigger();
+  if (key == ',') sampler[7].trigger();
+  if (key == '.') sampler[8].trigger();
+  if (key == '/') sampler[9].trigger();
 }
 
