@@ -34,6 +34,7 @@ float[] vals = new float[NUM];
 int val_ind = 0;
 //float[] fft_pow = new float[NUM];
 //float[] fft_phase = new float[NUM];
+int spect_ind = 0;
 
 MultiChannelBuffer valBuffer;
 
@@ -269,7 +270,10 @@ void draw() {
   
 
       for (int i = 0; i < vals.length/2; i++) {
-        stroke(255, 200, 0);
+        if (i == spect_ind) 
+          stroke(155, 100, 110);
+        else
+          stroke(255, 200, 0);
         //fft_pow[i] = fft.getBand(i);
         //fft_pow[fft_pow.length - i - 1] = fft_pow[i];
 
@@ -289,6 +293,7 @@ void draw() {
         // phase =( y_max - 100 - pix_y)/10
 
         // TBD unwrap the phase
+      
         stroke(100, 50, 0);
         line( 
               x_phase_min + i, y_max/2 - (phase_sc * (fft.getPhase(i) + 2*TWO_PI)), 
@@ -299,7 +304,10 @@ void draw() {
               x_phase_min + i, y_max/2 - (phase_sc * (fft.getPhase(i) + TWO_PI)), 
               x_phase_min + i, y_max/2 - (phase_sc * (fft.getPhase(i) - TWO_PI)) );
 
-        stroke(255, 200, 0);
+        if (i == spect_ind) 
+          stroke(155, 100, 110);
+        else
+          stroke(255, 200, 0);
         line( x_phase_min + i, y_max/2, 
               x_phase_min + i, y_max/2 - (phase_sc * fft.getPhase(i) ) ); 
       }
@@ -350,6 +358,7 @@ void draw() {
         changeBand(mouse_x, mouseY); 
       }
        
+      vals_changed = true;
       new_ifft = true;
     }
 
@@ -368,7 +377,8 @@ void draw() {
       } else {
         changePhase(mouse_x, mouseY); 
       }
-       
+
+      vals_changed = true;
       new_ifft = true;
     }
   }// mousePressed
@@ -376,15 +386,7 @@ void draw() {
   old_mouse_x = mouse_x;
   //old_mouse_y = mouse_y;
   
-  if (!mousePressed && old_mouse_pressed) {
-      
-    if (new_ifft) {
-           
-      fft.inverse(vals);
-
-      new_ifft = false;
-      recording = true;
-    }
+  if ((!mousePressed && old_mouse_pressed)) {
 
     if (vals_changed) {
       recording = true;
@@ -398,6 +400,10 @@ void draw() {
   // TBD only do this every n updates or less?
   // update all the samples based on the currently drawn waveform
   if (recording) {
+    if (new_ifft) {
+      fft.inverse(vals);
+      new_ifft = false;
+    }
     fill(0,255,0);
     rect(10,10, 20,20);
     for (int i = 0; i < valBuffer.getBufferSize(); i++) {
@@ -433,10 +439,9 @@ void keyPressed()
   {
     sampler.trigger();
   }*/
-  if (key == 'r') {
-    recording = true;
-
-  } //
+  //if (key == 'r') {
+  //  recording = true;
+  //} //
 
   //if (key == 'a' && val_sampler != null)  val_sampler.trigger();
   
@@ -505,6 +510,42 @@ void keyPressed()
     recording = true;
   }
 
+  if (key == 's') {
+    spect_ind -= 1;
+    spect_ind = (spect_ind + NUM/2) % (NUM/2);
+  }
+  if (key == 'g') {
+    spect_ind += 1;
+    spect_ind = (spect_ind + NUM/2) % (NUM/2);
+  }
+  if (key == 'd') {
+    float val = fft.getBand(spect_ind);
+    fft.setBand(spect_ind, val * 0.85);
+    println(val);
+    recording = true;
+    new_ifft = true;
+  }
+  if (key == 'f') {
+    float val = fft.getBand(spect_ind);
+    fft.setBand(spect_ind, (val + 0.0001) * 1.141);
+    println(val);
+    recording = true;
+    new_ifft = true;
+  }
+  if (key == 'e') {
+    float val = fft.getPhase(spect_ind);
+    fft.setPhase(spect_ind, val - 0.01);
+    println(val);
+    recording = true;
+    new_ifft = true;
+  }
+  if (key == 'r') {
+    float val = fft.getPhase(spect_ind);
+    fft.setPhase(spect_ind, val + 0.0113);
+    println(val);
+    recording = true;
+    new_ifft = true;
+  }
 
   // play different samplerates
   if (key == 'z') sampler[0].trigger();
