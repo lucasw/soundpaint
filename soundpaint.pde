@@ -25,7 +25,8 @@ Minim              minim;
 MultiChannelBuffer sampleBuffer;
 
 AudioOutput        output;
-Sampler[]            sampler = new Sampler[10];
+final int NUM_SAMPLES = 10;
+Sampler[]            sampler = new Sampler[NUM_SAMPLES];
 Sampler val_sampler;
 
 final int NUM = 256;
@@ -36,7 +37,7 @@ int val_ind = 0;
 //float[] fft_phase = new float[NUM];
 int spect_ind = 0;
 
-MultiChannelBuffer valBuffer;
+MultiChannelBuffer[] valBuffer = new MultiChannelBuffer[NUM_SAMPLES];
 
 final int y_max = 256;
 
@@ -123,7 +124,7 @@ FFTb fft = new FFTb(vals.length, 22100);
 
 void setup()
 {
-  size(800, 450); //, P3D);
+  size(1280, 720); //, P3D);
   
   // create Minim and an AudioOutput
   minim  = new Minim(this);
@@ -134,9 +135,11 @@ void setup()
   // two values because loadFileIntoBuffer will reconfigure the buffer 
   // to match the channel count and length of the file.
   sampleBuffer     = new MultiChannelBuffer( 1, 1024 );
-  
-  valBuffer = new MultiChannelBuffer( vals.length * 60, 1 );
-  println("buffer size " + str(valBuffer.getBufferSize()) );
+ 
+  for (int i = 0; i < NUM_SAMPLES; i++) {
+    valBuffer[i] = new MultiChannelBuffer( vals.length * (i+1) * 7, 1 );
+  }
+  println("max buffer size " + str(valBuffer[NUM_SAMPLES-1].getBufferSize()) );
 
   // we pass the buffer to the method and Minim will reconfigure it to match 
   // the file. if the file doesn't exist, or there is some other problen with 
@@ -406,18 +409,22 @@ void draw() {
     }
     fill(0,255,0);
     rect(10,10, 20,20);
-    for (int i = 0; i < valBuffer.getBufferSize(); i++) {
+    for (int i = 0; i < valBuffer[NUM_SAMPLES-1].getBufferSize(); i++) {
       //float v = ( ( (float) vals[i % vals.length] - min ) /
       //    ( max - min ) ) * 2.0 - 1.0;
       float v = ( ( vals[i % vals.length] ) /
           ( (float)y_max/2 ) );
-      valBuffer.setSample( 0, i, v );
+      
+      for (int j = 0; j < valBuffer.length; j++) {
+        if (i < valBuffer[j].getBufferSize()) 
+          valBuffer[j].setSample( 0, i, v );
+      }
     }
    
     for (int i = 0; i < sampler.length; i++) {
-      float rate = 1000 + 6000 * ((float)i + 1);
+      float rate = 2000 + 7000 * ((float)i + 1);
       //println( "rate " + str(rate) );
-      sampler[i] = new Sampler( valBuffer, rate, 1 ); // 4000.0 * (i + 1) * (i + 1), 1 );
+      sampler[i] = new Sampler( valBuffer[i], rate, 1 ); // 4000.0 * (i + 1) * (i + 1), 1 );
 
       // and finally, connect to the output so we can hear it
       sampler[i].patch( output );
@@ -444,7 +451,21 @@ void keyPressed()
   //} //
 
   //if (key == 'a' && val_sampler != null)  val_sampler.trigger();
-  
+ 
+  if (key == 'o') {
+    for (int i = 0; i < vals.length; i++) {
+      vals[i] *= 0.96;
+    }
+    recording = true;
+  }
+
+  if (key == 'p') {
+    for (int i = 0; i < vals.length; i++) {
+      vals[i] *= 1.03;
+    }
+    recording = true;
+  }
+
   if (key == 'u') {
     float[] vals2 = new float[vals.length];
     // TBD make the filter configurable in another widget
