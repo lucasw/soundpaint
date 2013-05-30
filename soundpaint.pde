@@ -16,6 +16,7 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import java.util.Date;
 
 import ddf.minim.*;
 import ddf.minim.ugens.*;
@@ -440,6 +441,8 @@ void draw() {
 
 }
 
+Date dt = new Date();
+
 void keyPressed() 
 {
   /*if ( key == ' ' && sampler != null )
@@ -452,18 +455,34 @@ void keyPressed()
 
   //if (key == 'a' && val_sampler != null)  val_sampler.trigger();
  
-  if (key == 'o') {
+  if (key == 't') {
     for (int i = 0; i < vals.length; i++) {
       vals[i] *= 0.96;
     }
     recording = true;
   }
 
-  if (key == 'p') {
+  if (key == 'y') {
     for (int i = 0; i < vals.length; i++) {
       vals[i] *= 1.03;
     }
     recording = true;
+  }
+
+  if (key == 'p') {
+
+    Table table = new Table();
+  
+    for (int i = 0; i < vals.length; i++) {
+      TableRow row = table.addRow();
+      row.setFloat("val", vals[i]);
+    }
+    
+    // save to disk
+    long ts = dt.getTime();
+    String name = "cur_" + ts + ".csv";
+    saveTable(table, name);
+    println("saved " + name);
   }
 
   if (key == 'u') {
