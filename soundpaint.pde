@@ -441,7 +441,6 @@ void draw() {
 
 }
 
-Date dt = new Date();
 
 void keyPressed() 
 {
@@ -471,7 +470,8 @@ void keyPressed()
 
   if (key == 'p') {
 
-    Table table = new Table();
+    Table table = createTable();
+    table.addColumn("val");
   
     for (int i = 0; i < vals.length; i++) {
       TableRow row = table.addRow();
@@ -479,6 +479,7 @@ void keyPressed()
     }
     
     // save to disk
+    Date dt = new Date();
     long ts = dt.getTime();
     String name = "cur_" + ts + ".csv";
     saveTable(table, name);
