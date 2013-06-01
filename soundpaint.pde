@@ -481,7 +481,7 @@ void keyPressed()
     // save to disk
     Date dt = new Date();
     long ts = dt.getTime();
-    String name = "cur_" + ts + ".csv";
+    String name = "data/cur_" + ts + ".csv";
     saveTable(table, name);
     println("saved " + name);
   }
