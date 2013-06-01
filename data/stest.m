@@ -22,16 +22,17 @@ di2 = [];
 %fmod = abs(data(i)) + 100;
 %fmod = 100;
 
-for i = [1:400]
+for i = [1:1000]
 
-base_freq = 400.0;
-freq = base_freq + 50.0 * sin(i * 0.1);
+base_freq = 200.0;
+freq = base_freq + 10.0 * sin(i * 0.07);
 ti = [0:1.0/freq:1.0];
-di = interp1(t, data, ti, 'linear');
+di = interp1(t, data, ti, 'nearest');
 
 if true
   % oscillating low pass filter
-  bf = 0.08 * (sin(i * 0.41) + 1.0)/2.0; %
+  %bf = 0.08 * (sin(i * 0.41) + 0.05*sin(i*0.91) + 1.2)/2.4; %
+  bf = 0.08 * (sin(i * 0.312) + 1.0)/2.0; 
   [b,a] = butter(2, bf);
   dif = filter(b,a, di); 
 else
@@ -66,8 +67,10 @@ t = [1:ldf]/ldf;
 di2f = di2f .* sin(pi*t*2);
 end
 
-lt = [1:1000];
-di2f(ldf-1000+1:ldf) = di2f(ldf-1000+1:ldf) .* cos(pi * lt);
+decay_len = 20000;
+lt = [1:decay_len];
+mod =  (cos(pi * lt/decay_len) + 1.0)/2.0;
+di2f(ldf - decay_len + 1:ldf) = di2f(ldf - decay_len + 1:ldf) .* mod;
 %di2f = di2f .* (exp(max(t) -t) - 1);
 
 
