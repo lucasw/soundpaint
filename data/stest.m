@@ -22,12 +22,12 @@ di2 = [];
 %fmod = abs(data(i)) + 100;
 %fmod = 100;
 
-for i = [1:1000]
+for i = [1:1500]
 
-base_freq = 200.0;
-freq = base_freq + 10.0 * sin(i * 0.07);
+base_freq = 100.0;
+freq = base_freq + 50.0 * sin(i * 0.07);
 ti = [0:1.0/freq:1.0];
-di = interp1(t, data, ti, 'nearest');
+di = interp1(t, data, ti, 'linear');
 
 if true
   % oscillating low pass filter
@@ -41,16 +41,23 @@ end
 
 di2 = [di2, dif];
 
+  if (i == 1) 
+    figure(10)
+    plot(ti,di);
+  end
 end
 
 di2(isnan(di2))= 0;
 
 % add some reverb
 if true
-el = 5000
-f2a = [1.0 zeros(1,130) -0.7]; %zeros(1, el) -0.8];
-f2b = [1.0 ];% zeros(1,el) 0.9 zeros(1,el) 0.8];
-di2f = filter(f2b, f2a, di2);
+el = 30
+b=[0.6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1];
+a=[1.0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6];
+di2f = filter(b, a, di2);
+%f2a = [0.6 zeros(1,el) 1.0]; %zeros(1, el) -0.8];
+%f2b = [1.0 zeros(1,el+1) 0.9];
+%di2f = filter(f2b, f2a, di2);
 else
   di2f = di2;
 end
@@ -85,5 +92,6 @@ plot(di2f(floor(ldf/2)+2000:floor(ldf/2)+5000));
 %pause;
 
 sound(di2f', 48000);
-wavwrite(di2f', 48000,  "test.wav");
+%f = filename, ".wav";
+wavwrite(di2f', 48000,  [filename, ".wav"]);
 
