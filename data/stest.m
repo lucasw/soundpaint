@@ -1,5 +1,12 @@
 
-filename = "cur_1369971678529.csv";
+filename = "cur_1369971678529.csv"
+
+a = nargin
+%arg_list = argv();
+for i = [1:nargin]
+  filename = argv(){i} %argv(i)
+end
+%return
 
 data = dlmread(filename, ",");
 %data = data - mode(data); %mean(data);
