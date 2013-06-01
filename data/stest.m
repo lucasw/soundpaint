@@ -22,15 +22,21 @@ di2 = [];
 %fmod = abs(data(i)) + 100;
 %fmod = 100;
 
-for i = [1:200]
+for i = [1:400]
 
-ti = [0:1.0/(480.0): 1.0];
-di = interp1(t, data, ti, 'cubic');
+base_freq = 400.0;
+freq = base_freq + 50.0 * sin(i * 0.1);
+ti = [0:1.0/freq:1.0];
+di = interp1(t, data, ti, 'linear');
 
-% oscillating low pass filter
-bf = 0.08 * (sin(i * 0.41) + 1.0)/2.0; %
-[b,a] = butter(2, bf);
-dif = filter(b,a, di); 
+if true
+  % oscillating low pass filter
+  bf = 0.08 * (sin(i * 0.41) + 1.0)/2.0; %
+  [b,a] = butter(2, bf);
+  dif = filter(b,a, di); 
+else
+  dif = di;
+end
 
 di2 = [di2, dif];
 
@@ -39,10 +45,14 @@ end
 di2(isnan(di2))= 0;
 
 % add some reverb
-el = 100
-f2a = [1.0 ]; % zeros(1, el) 0.99];
-f2b = [1.0 zeros(1,el) 0.9 zeros(1,el) 0.8];
-di2f = filter(b, a, di2);
+if true
+el = 5000
+f2a = [1.0 zeros(1,130) -0.7]; %zeros(1, el) -0.8];
+f2b = [1.0 ];% zeros(1,el) 0.9 zeros(1,el) 0.8];
+di2f = filter(f2b, f2a, di2);
+else
+  di2f = di2;
+end
 %di2 = conv(di2, f2b)/sum(f2b);
 
 di2f = di2f - min(di2f);
@@ -51,8 +61,10 @@ di2f = di2f*2 - 1;
 %di2 = di2*5;
 
 ldf = length(di2f);
+if false
 t = [1:ldf]/ldf;
 di2f = di2f .* sin(pi*t*2);
+end
 
 lt = [1:1000];
 di2f(ldf-1000+1:ldf) = di2f(ldf-1000+1:ldf) .* cos(pi * lt);
@@ -66,8 +78,8 @@ subplot(2,1,2);
 plot(di2f);
 
 figure(2);
-plot(di2f(ldf/2+2000:ldf/2+5000));
-
+plot(di2f(floor(ldf/2)+2000:floor(ldf/2)+5000));
+%pause;
 
 sound(di2f', 48000);
 wavwrite(di2f', 48000,  "test.wav");
