@@ -207,7 +207,7 @@ final int x_phase_max = x_phase_min + NUM/2;
 final float fft_sc = 10.0;
 final float fft_off = 170.0;
 
-void changeBand(int mouse_x, int mouse_y) {
+void changeBand(int mouse_x, float mouse_y) {
   int ind = mouse_x - x_spectrum_min;
   float fft_pow_new = exp(( y_max - fft_off - mouse_y) / fft_sc);
   //fft_pow[ind] = fft_pow_new;
@@ -216,7 +216,7 @@ void changeBand(int mouse_x, int mouse_y) {
   fft.setBand(ind, fft_pow_new);
 }
 
-void changePhase(int mouse_x, int mouse_y) {
+void changePhase(int mouse_x, float mouse_y) {
   int ind = mouse_x - x_phase_min;
   //float fft_pow_new = exp(( y_max - fft_off - mouse_y) / fft_sc);
 
@@ -224,6 +224,13 @@ void changePhase(int mouse_x, int mouse_y) {
 
   //println("new fft phase " + str(ind) + " " + str(fft_phase_new)) ;
   fft.setPhase(ind, fft_phase_new);
+}
+
+// called once every time the mouse moves and a mouse button is pressed
+ArrayList mouse_xy = new ArrayList();
+void mouseDragged() {
+  
+  mouse_xy.add(new PVector(mouseX, mouseY));
 }
 
 void draw() {
@@ -318,48 +325,61 @@ void draw() {
   }
 
   int mouse_x = (int) mouseX;
-
+  int mouse_y = mouseY;
 
   // mouse in 
-  if ( mousePressed ) {
-  
+  // if ( mousePressed ) {
+  while (mouse_xy.size() > 0) {
+    //println("mouse_xy size " + str(mouse_xy.size())); 
+    mouse_x = (int) ((PVector) (mouse_xy.get(0))).x;
+    mouse_y = (int) ((PVector) (mouse_xy.get(0))).y;
+    mouse_xy.remove(0);
+
     // in time signal area
     if ( ( mouse_x < vals.length ) &&
         ( mouse_x >= 0 ) && 
-        ( mouseY < y_max) ) {
+        ( mouse_y < y_max) ) {
 
       //if (abs(mouse_x - old_mouse_x) < 10) {
       if (old_mouse_pressed &&
           ( old_mouse_x < vals.length ) &&
           ( old_mouse_x >= 0 ) ) {
 
+        // TBD replace this with a function that takes the mouse_xy vector
+        // and returns a vector with all the intermediate positions
+        float y_accum = (float) old_mouse_y;
+        float y_step = (float)(mouse_y - old_mouse_y)/(float)abs(mouse_x - old_mouse_x);
         for (int i = min(mouse_x, old_mouse_x); i < max(mouse_x, old_mouse_x); i++) {
-          vals[i] = mouseY - y_max/2;
+          vals[i] = y_accum - y_max/2;
+          y_accum += y_step;
           vals_changed = true;
         }
       } else {
-        vals[mouse_x] = mouseY - y_max/2;
+        vals[mouse_x] = mouse_y - y_max/2;
       }
 
-      if (mouseY > max) max = mouseY;
-      if (mouseY < min) min = mouseY;
+      if (mouse_y > max) max = mouse_y;
+      if (mouse_y < min) min = mouse_y;
 
     }
 
     // in fft power area
     if (( mouse_x < x_spectrum_max ) &&
         ( mouse_x >= x_spectrum_min ) && 
-        ( mouseY < y_max) ) {
+        ( mouse_y < y_max) ) {
 
       if (old_mouse_pressed &&
           ( old_mouse_x < x_spectrum_max ) &&
           ( old_mouse_x >= x_spectrum_min ) ) {
 
+        float y_accum = (float) old_mouse_y;
+        float y_step = (float)(mouse_y - old_mouse_y)/(float)abs(mouse_x - old_mouse_x);
         for (int i = min(mouse_x, old_mouse_x); i < max(mouse_x, old_mouse_x); i++) {
-          changeBand(i, mouseY); 
+          changeBand(i, y_accum); 
+          y_accum += y_step;
         }
       } else {
-        changeBand(mouse_x, mouseY); 
+        changeBand(mouse_x, mouse_y); 
       }
        
       vals_changed = true;
@@ -369,26 +389,32 @@ void draw() {
     // in fft phase area
     if (( mouse_x < x_phase_max ) &&
         ( mouse_x >= x_phase_min ) && 
-        ( mouseY < y_max) ) {
+        ( mouse_y < y_max) ) {
 
       if (old_mouse_pressed &&
          ( mouse_x <  x_phase_max ) &&
          ( mouse_x >= x_phase_min ) ) { 
 
+        float y_accum = (float) old_mouse_y;
+        float y_step = (float)(mouse_y - old_mouse_y)/(float)abs(mouse_x - old_mouse_x);
         for (int i = min(mouse_x, old_mouse_x); i < max(mouse_x, old_mouse_x); i++) {
-          changePhase(i, mouseY); 
+          changePhase(i, y_accum); 
+          y_accum += y_step;
         }
       } else {
-        changePhase(mouse_x, mouseY); 
+        changePhase(mouse_x, mouse_y); 
       }
 
       vals_changed = true;
       new_ifft = true;
     }
-  }// mousePressed
+  
+    old_mouse_x = mouse_x;
+    old_mouse_y = mouse_y;
+  } // mousePressed
 
   old_mouse_x = mouse_x;
-  //old_mouse_y = mouse_y;
+  old_mouse_y = mouse_y;
   
   if ((!mousePressed && old_mouse_pressed)) {
 
